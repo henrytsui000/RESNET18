@@ -75,8 +75,8 @@ class ResNet(nn.Module):
         return out
 
 
-def ResNet18():
-    return ResNet(BasicBlock, [2, 2, 2, 2])
+def ResNet18(nc=10):
+    return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=nc)
 
 
 def test_forward_pass():
