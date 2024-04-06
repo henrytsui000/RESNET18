@@ -7,10 +7,24 @@ A new version of resnet18
 $pip install -r requirements.txt
 ```
 
+# Test Model
+
+```shell
+# Pytest
+$pytest ./model/normal18.py -v
+$pytest ./model/modified18.py -v
+# Summarize
+$python ./model/normal18.py
+$python ./model/modified18.py
+```
+
+## Training model
 ```shell
 $python train.py normal
 $python train.py modified
 ```
+
+## Compare Table
 
 ||Origin|Modified|
 |:-:|:-:|:-:|
