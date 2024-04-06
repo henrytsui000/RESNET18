@@ -2,22 +2,35 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchsummary import summary
+import pytest
+
 
 class BasicBlock(nn.Module):
     expansion = 1
 
     def __init__(self, in_channels, out_channels, stride=1):
         super(BasicBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3,stride=stride, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size=3,
+            stride=stride,
+            padding=1,
+            bias=False,
+        )
         self.bn1 = nn.BatchNorm2d(out_channels)
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(
+            out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False
+        )
         self.bn2 = nn.BatchNorm2d(out_channels)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_channels != out_channels:
             self.shortcut = nn.Sequential(
-                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(out_channels)
+                nn.Conv2d(
+                    in_channels, out_channels, kernel_size=1, stride=stride, bias=False
+                ),
+                nn.BatchNorm2d(out_channels),
             )
 
     def forward(self, x):
@@ -26,7 +39,8 @@ class BasicBlock(nn.Module):
         out += self.shortcut(x)
         out = F.relu(out)
         return out
-    
+
+
 class ResNet(nn.Module):
     def __init__(self, block, num_blocks, num_classes=10):
         super(ResNet, self).__init__()
@@ -60,14 +74,39 @@ class ResNet(nn.Module):
         out = self.fc(out)
         return out
 
+
 def ResNet18():
     return ResNet(BasicBlock, [2, 2, 2, 2])
+
+
+def test_forward_pass():
+    model = ResNet18()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    inputs = torch.randn(1, 3, 32, 32).to(device)
+    outputs = model(inputs)
+    assert outputs.shape == (1, 10)  # Assuming 10 classes
+
+
+def test_summary_model():
+    # Create an instance of the model
+    model = ResNet18()
+
+    # Move the model to the appropriate device (CPU or GPU)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+
+    # Print the summary of the model
+    summary(model, (3, 32, 32))  # Input size is (channels, height, width)
+
 
 if __name__ == "__main__":
     # Create an instance of the model
     model = ResNet18()
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # Move the model to the appropriate device (CPU or GPU)
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
-    summary(model, (3, 32, 32)) 
+    # Print the summary of the model
+    summary(model, (3, 32, 32))  # Input size is (channels, height, width)
