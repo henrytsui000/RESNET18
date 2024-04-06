@@ -2,11 +2,13 @@ from tqdm import tqdm
 from torch import nn
 import torch
 from typing import Any, Tuple, Iterator
+from torch.optim import Optimizer
+from rich.progress import Progress
 
 
 class Trainer:
     def __init__(
-        self, model: nn.Module, criterion: Any, optimizer: Any, device: torch.device
+        self, model: nn.Module, criterion, optimizer: Optimizer, device:torch.device, patience: int = 3
     ) -> None:
         """
         Initialize the Trainer class.
@@ -21,6 +23,9 @@ class Trainer:
         self.criterion = criterion
         self.optimizer = optimizer
         self.device = device
+        self.patience = patience
+        self.counter = 0
+        self.best_acc = float('-inf')
 
     def train_one_iter(self, inputs: torch.Tensor, labels: torch.Tensor) -> float:
         """
@@ -45,7 +50,7 @@ class Trainer:
         return loss.item()
 
     def train_one_epoch(
-        self, trainloader: Iterator[Tuple[torch.Tensor, torch.Tensor]], epoch: int
+        self, trainloader: Iterator[Tuple[torch.Tensor, torch.Tensor]], epoch:int 
     ) -> None:
         """
         Train the model for one epoch.
@@ -55,11 +60,26 @@ class Trainer:
             epoch (int): The current epoch number.
         """
         running_loss = 0.0
-        with tqdm(
-            total=len(trainloader), desc=f"Epoch {epoch}", unit="batch", leave=True
-        ) as pbar:
+        with Progress() as progress:
+            task = progress.add_task("[cyan]Training", total=len(trainloader))
+
             for inputs, labels in trainloader:
                 loss = self.train_one_iter(inputs, labels)
                 running_loss += loss
-                pbar.update(1)
-            pbar.set_postfix_str(f"Loss: {running_loss / len(trainloader):.3f}")
+                progress.update(task, advance=1, description=f"Epoch {epoch}")
+            
+            progress.remove_task(task)
+        return running_loss / len(trainloader)
+
+    def save_model(self, filepath: str = "./model.pt"):
+        torch.save(self.model, filepath)
+
+    def early_stop(self, val_acc: float):
+        if val_acc > self.best_acc:
+            self.best_acc = val_acc
+            self.counter = 0
+        else:
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False

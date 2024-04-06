@@ -5,3 +5,4 @@ pytest
 argparse
 tqdm
 loguru
+rich

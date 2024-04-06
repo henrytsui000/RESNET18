@@ -1,64 +1,44 @@
 import argparse
 import torch
-import torch.nn as nn
+from torch.nn import CrossEntropyLoss
 import torch.optim as optim
 from loguru import logger
+
 from utils.trainer import Trainer
-from typing import Any, Tuple, Iterator
 from dataset import load_dataset
 from model import load_model
+from test import evaluate_model
 
 
 def train_model(
-    model, trainloader, testloader, criterion, optimizer, device, epochs=10
+    model, trainloader, testloader, criterion, optimizer, device, epochs=10, patience=3
 ):
     """
     Train the model.
     """
-    trainer = Trainer(model, criterion, optimizer, device)
-    trainer.epochs = epochs
+    trainer = Trainer(model, criterion, optimizer, device, patience=patience)
 
+    best_val_acc = float('-inf')
+
+        
     for epoch in range(epochs):  # Train for specified number of epochs
-        trainer.train_one_epoch(trainloader, epoch + 1)
-        accuracy = evaluate_model(model, testloader, device)
-        logger.info(f"Epoch {epoch+1} Accuracy: {accuracy:.2f}%")
+        train_loss = trainer.train_one_epoch(trainloader, epoch + 1)
+        
+        val_acc = evaluate_model(model, testloader, device)
+        logger.info(f"Epoch {epoch+1} Train Loss: {train_loss:.4f} | Val Acc: {val_acc:.4f}")
+
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            logger.info("Saving model...")
+            trainer.save_model("best_model.pt")
+        if trainer.early_stop(val_acc):
+            logger.info(f"Validation loss hasn't improved for {patience} epochs. Stopping training.")
+            break
 
     logger.info("Finished Training")
 
 
-def evaluate_model(
-    model: nn.Module,
-    testloader: Iterator[Tuple[torch.Tensor, torch.Tensor]],
-    device: torch.device,
-) -> float:
-    """
-    Evaluate the model on the test data and calculate the accuracy.
-
-    Args:
-        model (nn.Module): The trained model.
-        testloader (Iterator[Tuple[torch.Tensor, torch.Tensor]]): The data loader for test data.
-        device (torch.device): The device to run the evaluation on (e.g., 'cuda' or 'cpu').
-
-    Returns:
-        float: The accuracy of the model on the test data.
-    """
-    model.eval()
-    correct = 0
-    total = 0
-
-    with torch.no_grad():
-        for images, labels in testloader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-    accuracy = 100 * correct / total
-    return accuracy
-
-
-def add_arguments(parser):
+def add_arguments(parser: argparse.ArgumentParser):
     """
     Add command-line arguments to the parser.
     """
@@ -70,6 +50,7 @@ def add_arguments(parser):
     )
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("-e", "--epochs", type=int, default=10)
+    parser.add_argument("--patience", type=int, default=3)
 
 def main(args):
     """
@@ -79,7 +60,7 @@ def main(args):
     model = load_model(args.model_type, nc)
 
     # Define loss function and optimizer
-    criterion = nn.CrossEntropyLoss()
+    criterion = CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=5e-4)
 
     # Train the model
@@ -91,9 +72,7 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Choose the model type: 'normal' or 'modified'."
-    )
+    parser = argparse.ArgumentParser(description="Choose the model type: 'normal' or 'modified'.")
     add_arguments(parser)
     args = parser.parse_args()
 
