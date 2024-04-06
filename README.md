@@ -12,7 +12,11 @@ $python train.py normal
 $python train.py modified
 ```
 
-
+||Origin|Modified|
+|:-:|:-:|:-:|
+|Params| 42.63|26.70|
+|Loss|0.314|0.302|
+|ACC|85%|86%|
 
 ## Origin RESNET18
 ```
