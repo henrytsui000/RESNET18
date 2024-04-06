@@ -3,3 +3,5 @@ torchsummary
 torchvision
 pytest
 argparse
+tqdm
+loguru
