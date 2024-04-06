@@ -263,3 +263,4 @@ crashlytics-build.properties
 fabric.properties
 
 data
+.pytest_cache

@@ -98,9 +98,9 @@ def main(model_type):
 
     # Choose model
     if model_type == "normal":
-        from normal18 import ResNet18
+        from model.normal18 import ResNet18
     elif model_type == "modified":
-        from modified18 import ResNet18
+        from model.modified18 import ResNet18
     else:
         raise ValueError("Invalid model_type. Choose 'normal' or 'modified'.")
 
