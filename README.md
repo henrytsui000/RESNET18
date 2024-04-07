@@ -11,26 +11,22 @@ $pip install -r requirements.txt
 
 ```shell
 # Pytest
-$pytest ./model/normal18.py -v
-$pytest ./model/modified18.py -v
-# Summarize
-$python ./model/normal18.py
-$python ./model/modified18.py
+$pytest
 ```
 
 ## Training model
 ```shell
-$python train.py normal
-$python train.py modified
+$python train.py ResNet18 -m # New Frame work
+$python train.py ResNet18 # Traditional ResNet18
 ```
 
 ## Compare Table
 
-||Origin|Modified|
+||Origin ResNet18|Modified ResNet18|
 |:-:|:-:|:-:|
 |Params| 42.63|26.70|
-|Loss|0.314|0.302|
-|ACC|85%|86%|
+|CIFAR10-ACC|85%|86%|
+|CIFAR100-ACC|65.07%|67.46%|
 
 ## Origin RESNET18
 ```
