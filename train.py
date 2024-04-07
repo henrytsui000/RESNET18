@@ -43,21 +43,24 @@ def add_arguments(parser: argparse.ArgumentParser):
     Add command-line arguments to the parser.
     """
     parser.add_argument(
-        "model_type", type=str, choices=["normal", "modified"], help="Model type to use"
+        "model_type", type=str, choices=["ResNet18", "ResNet34"], help="Model type to use"
     )
     parser.add_argument(
         "--dataset", type=str, choices=["cifar10", "cifar100"], default="cifar10"
     )
+    parser.add_argument(
+        "-m", "--modified", action='store_true', default=False
+    )
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("-e", "--epochs", type=int, default=10)
-    parser.add_argument("--patience", type=int, default=3)
+    parser.add_argument("--patience", type=int, default=5)
 
 def main(args):
     """
     Main function to load data, define model, train, and evaluate.
     """
     (trainloader, testloader), nc = load_dataset(args.dataset)
-    model = load_model(args.model_type, nc)
+    model = load_model(args.model_type, modified=args.modified, nc = nc)
 
     # Define loss function and optimizer
     criterion = CrossEntropyLoss()
